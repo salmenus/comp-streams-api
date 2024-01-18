@@ -1,25 +1,19 @@
-import {contentTypes} from '../static/smallFile/contentTypes.ts';
-import {docProps__core} from '../static/smallFile/docProps__core.ts';
-import {dotRels} from '../static/smallFile/dotRels.ts';
-import {xl__sharedStrings} from '../static/smallFile/xl__sharedStrings.ts';
-import {xl__styles} from '../static/smallFile/xl__styles.ts';
-import {xl__theme__theme1} from '../static/smallFile/xl__theme__theme1.ts';
-import {xl__dotRels__workbook} from '../static/smallFile/xl__dotRels__workbook.ts';
-import {xl__workbook} from '../static/smallFile/xl__workbook.ts';
-import {xl__worksheets__sheet1} from '../static/smallFile/xl__worksheets__sheet1.ts';
+import {normalFile} from '../static/normalFile.ts';
 import {ExcelAlignment, ExcelProtection} from '../types.ts';
 
-export const excelFileFactory = (() => {
-    const xl__createStylesheet = () => xl__styles;
-    const xl__createSharedStrings = () => xl__sharedStrings;
-    const xl__createRelsWorkbook = () => xl__dotRels__workbook;
-    const xl__createWorkbook = () => xl__workbook;
-    const xl__createTheme = () => xl__theme__theme1;
-    const xl__createWorksheet = () => xl__worksheets__sheet1;
+const fileToUser = normalFile;
 
-    const createCore = () => docProps__core;
-    const createContentTypes = () => contentTypes;
-    const createDotRels = () => dotRels;
+export const excelFileFactory = (() => {
+    const xl__createStylesheet = () => fileToUser.xl__styles;
+    const xl__createSharedStrings = () => fileToUser.xl__sharedStrings;
+    const xl__createRelsWorkbook = () => fileToUser.xl__dotRels__workbook;
+    const xl__createWorkbook = () => fileToUser.xl__workbook;
+    const xl__createTheme = () => fileToUser.xl__theme__theme1;
+    const xl__createWorksheet = () => fileToUser.xl__worksheets__sheet1;
+
+    const createCore = () => fileToUser.docProps__core;
+    const createContentTypes = () => fileToUser.contentTypes;
+    const createDotRels = () => fileToUser.dotRels;
 
     return {
         xl__createWorkbook,
