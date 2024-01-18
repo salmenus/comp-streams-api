@@ -1,4 +1,4 @@
-export function utf8_encode(s: string | null): string {
+export function utf8Encode(s: string | null): string {
     const stringFromCharCode = String.fromCharCode;
 
     function ucs2decode(string: string | null): number[] {
@@ -88,13 +88,3 @@ export function utf8_encode(s: string | null): string {
     return byteString;
 }
 
-export function decToHex(number: number, bytes: number): string {
-    let hex = '';
-
-    for (let i = 0; i < bytes; i++) {
-        hex += String.fromCharCode(number & 0xff);
-        number >>>= 8;
-    }
-
-    return hex;
-}

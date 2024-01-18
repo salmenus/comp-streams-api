@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import './App.css';
-import {xlsxBuild} from './ag/xlsxBuild.ts';
+import {createExcelDocument} from './ag/excel/createExcelDocument.ts';
 import {compressBlob} from './utils/compress.ts';
 import {formatFileSize} from './utils/formatFileSize.ts';
 import {readFileAsBlob} from './utils/readFile.ts';
@@ -62,7 +62,7 @@ function App() {
         setStatus('compressing');
         console.log('Compressing file from memory ! ...');
 
-        xlsxBuild(rawData).then((blob) => {
+        createExcelDocument(rawData).then((blob) => {
             console.log('File compressed - File size:');
             console.log(blob.size);
             setStatus('success');

@@ -1,6 +1,6 @@
-import {getMultipleSheetsAsExcel} from './excel.ts';
+import {getMultipleSheetsAsExcel} from './getMultipleSheetsAsExcel.ts';
 
-export const xlsxBuild = async (inputData: Array<object>): Promise<Blob> => {
+export const createExcelDocument = async (inputData: Array<object>): Promise<Blob> => {
     console.log('xlsxBuild');
     console.log('Raw input data with length ' + inputData.length + ' will be ignored, and static data will be returned instead!');
 
