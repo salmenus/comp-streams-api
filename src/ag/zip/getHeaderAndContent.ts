@@ -1,7 +1,7 @@
 import {compressLocalFile} from './compressLocalFile.ts';
 import {convertDate, convertTime, convertDecToHex} from './convert.ts';
 import {getFromCrc32Table, getFromCrc32TableAndByteArray} from './ctcTable.ts';
-import {getConvertedContent} from './getConvertedContent.ts';
+import {getDecodedContent} from './getDecodedContent.ts';
 import {utf8Encode} from './utf8Encode.ts';
 import {ZipFile} from './zipContainer.ts';
 
@@ -11,12 +11,17 @@ export const getHeaderAndContent = async (currentFile: ZipFile, offset: number, 
     content: string | Uint8Array;
     isCompressed: boolean;
 }> => {
-    const { content, path, created, isBase64 } = currentFile;
+    const {
+        content,
+        path,
+        created: creationDate,
+        isBase64, // true for images and other base64 encoded files
+    } = currentFile;
 
     const utfPath = utf8Encode(path);
     const isUTF8 = utfPath !== path;
-    const time = convertTime(created);
-    const dt = convertDate(created);
+    const time = convertTime(creationDate);
+    const dt = convertDate(creationDate);
 
     let extraFields = '';
 
@@ -25,36 +30,31 @@ export const getHeaderAndContent = async (currentFile: ZipFile, offset: number, 
         extraFields = "\x75\x70" +  convertDecToHex(uExtraFieldPath.length, 2) + uExtraFieldPath;
     }
 
-    const { size, content: convertedContent } = !content
+    const { size, content: rawContent } = !content
         ? ({ size: 0, content: ''})
-        : getConvertedContent(content, isBase64);
+        : getDecodedContent(content, isBase64);
 
     let compressedContent: Uint8Array | undefined = undefined;
     let compressedSize: number | undefined = undefined;
-
-    let log = false;
-    const isExcelSheet = currentFile.path.endsWith('.xml') && currentFile.path.includes('xl/worksheets');
-    if (isExcelSheet) {
-        console.log('-------------------');
-        console.log('sheet file!');
-        log = true;
-    }
-
-    log && console.log('path: ' + currentFile.path);
-    log && console.log('content size: ' + size);
-
     let compressionPerformed = false;
-    if (compressOutput)  {
-        log && console.log('compressing...');
-        const result = await compressLocalFile(convertedContent, isBase64);
+
+    const shouldAttemptCompression = currentFile.type === 'file' && currentFile.canBeCompressed && compressOutput && rawContent && size > 0;
+    if (shouldAttemptCompression)  {
+        const result = await compressLocalFile(rawContent, isBase64);
         compressedContent = result.content;
         compressedSize = result.size;
-        log && console.log('compressed size: ' + compressedSize);
         compressionPerformed = true;
     }
 
-    const contentToUse = compressedContent !== undefined ? compressedContent : convertedContent;
-    const crcFlag = compressedContent !== undefined ? getFromCrc32TableAndByteArray(compressedContent) : getFromCrc32Table(convertedContent);
+    if (
+        (compressionPerformed && (!compressedContent || !compressedSize))
+        || (!compressionPerformed && (compressedContent || compressedSize))
+    ) {
+        throw new Error('Compression result is invalid!');
+    }
+
+    const contentToUse = compressedContent !== undefined ? compressedContent : rawContent;
+    const crcFlag = compressedContent !== undefined ? getFromCrc32TableAndByteArray(compressedContent) : getFromCrc32Table(rawContent);
     const sizeToUse = compressedSize !== undefined ? compressedSize : size;
     const compressionMethod = compressionPerformed ? 8 : 0; // As per ECMA-376 Part 2 specs
 

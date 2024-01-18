@@ -21,12 +21,12 @@ export const compressBlob = async (data: Blob): Promise<{
     });
 
     // Extract the compressed data
-    const chunks: Blob[] = [];
     let chunksSize = 0;
-    const writeCompressedData: WritableStream<Blob> = new WritableStream({
-        write: (chunk) => {
+    const chunks: Uint8Array[] = [];
+    const writeCompressedData: WritableStream<Uint8Array> = new WritableStream({
+        write: (chunk: Uint8Array) => {
             chunks.push(chunk);
-            chunksSize += chunk.size;
+            chunksSize += chunk.length;
         }
     });
 

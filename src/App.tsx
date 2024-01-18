@@ -63,7 +63,7 @@ function App() {
 
     const buildExcelFileFromMemory = useCallback((compressOutput: boolean = false) => {
         setStatus('compressing');
-        console.log('Compressing file from memory ! ...');
+        console.log('Building file from memory ! with compressOutput =', compressOutput);
 
         createExcelDocument(rawData, compressOutput).then((blob) => {
             console.log('File compressed - File size:');

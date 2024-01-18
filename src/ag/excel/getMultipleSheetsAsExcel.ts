@@ -20,7 +20,7 @@ export const getMultipleSheetsAsExcel = async (compressOutput: boolean): Promise
     ZipContainer.addFile('xl/styles.xml', excelFileFactory.xl__createStylesheet());
     ZipContainer.addFile('xl/_rels/workbook.xml.rels', excelFileFactory.xl__createRelsWorkbook());
     ZipContainer.addFile('xl/theme/theme1.xml', excelFileFactory.xl__createTheme());
-    ZipContainer.addFile('xl/worksheets/sheet1.xml', excelFileFactory.xl__createWorksheet());
+    ZipContainer.addFile('xl/worksheets/sheet1.xml', excelFileFactory.xl__createWorksheet(), true);
 
     const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     return ZipContainer.getContent(mimeType, compressOutput);

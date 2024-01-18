@@ -1,14 +1,20 @@
-import {buildFolderEnd, buildUint8Array} from './buildZip.ts';
+import {buildFolderEnd} from './buildZip.ts';
+import {convertStringToByteArray} from './convert.ts';
 import {getHeaderAndContent} from './getHeaderAndContent.ts';
 
-export interface ZipFolder {
+export interface ZipFile {
     path: string;
     created: Date;
     isBase64: boolean;
+    type: 'file' | 'folder';
+    content: string | undefined;
+    canBeCompressed: boolean;
 }
 
-export interface ZipFile extends ZipFolder {
-    content?: string;
+export interface ZipFolder extends ZipFile {
+    type: 'folder';
+    content: undefined;
+    canBeCompressed: false;
 }
 
 export class ZipContainer {
@@ -23,25 +29,30 @@ export class ZipContainer {
         this.folders.push({
             path,
             created: new Date(),
-            isBase64: false
+            isBase64: false,
+            type: 'folder',
+            content: undefined,
+            canBeCompressed: false
         });
     }
 
-    public static addFile(path: string, content: string, isBase64 = false): void {
+    public static addFile(path: string, content: string, canBeCompressed: boolean = false, isBase64 = false): void {
         this.files.push({
             path,
             created: new Date(),
             content,
-            isBase64
+            isBase64,
+            canBeCompressed,
+            type: 'file'
         });
     }
 
     public static async getContent(mimeType: string = 'application/zip', compressOutput: boolean): Promise<Blob> {
         const textOutput = await this.buildFileStream(compressOutput);
-        const uInt8Output = buildUint8Array(textOutput);
+        // const uInt8Output = convertStringToByteArray(textOutput);
         this.clearStream();
 
-        return new Blob([uInt8Output], { type: mimeType });
+        return new Blob([textOutput], { type: mimeType });
     }
 
     private static clearStream(): void {
@@ -49,11 +60,11 @@ export class ZipContainer {
         this.files = [];
     }
 
-    private static async buildFileStream(compressOutput: boolean): Promise<string> {
-        const totalFiles = this.folders.concat(this.files);
+    private static async buildFileStream(compressOutput: boolean): Promise<Uint8Array> {
+        const totalFiles: ZipFile[] = [...this.folders, ...this.files];
         const len = totalFiles.length;
-        let fData = '';
-        let foData = '';
+        let fData: Uint8Array = new Uint8Array(0);
+        let foData: Uint8Array = new Uint8Array(0);
         let lL = 0;
         let cL = 0;
 
@@ -66,11 +77,26 @@ export class ZipContainer {
 
             lL += fileHeader.length + content.length;
             cL += folderHeader.length;
-            fData += fileHeader + content;
-            foData += folderHeader;
+
+            // Append fileHeader to fData
+            fData = new Uint8Array([...fData, ...convertStringToByteArray(fileHeader)]);
+
+            // Append content to fData
+            const contentAsUint8Array = typeof content === 'string' ? convertStringToByteArray(content) : content;
+            fData = new Uint8Array([...fData, ...contentAsUint8Array]);
+
+            // Append folder header to foData
+            foData = new Uint8Array([...foData, ...convertStringToByteArray(folderHeader)]);
+
+            // fData += fileHeader + content;
+            // foData += folderHeader;
         }
 
         const foEnd = buildFolderEnd(len, cL, lL);
-        return fData + foData + foEnd;
+
+        // Append folder end to foData
+        return new Uint8Array([...fData, ...foData, ...convertStringToByteArray(foEnd)]);
+
+        // return fData + foData + foEnd;
     }
 }
