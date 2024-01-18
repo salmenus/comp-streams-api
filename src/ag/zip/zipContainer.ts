@@ -1,3 +1,4 @@
+import {compressBlob} from '../../utils/compress.ts';
 import {convertDate, convertTime, decToHex} from './convert.ts';
 import {crcTable} from './ctcTable.ts';
 import {utf8Encode} from './utf8Encode.ts';
@@ -78,32 +79,30 @@ export class ZipContainer {
         size: number;
         content: Uint8Array;
     }> {
-        console.log('Attempting to compress local file content...');
-        console.log(content);
-        console.log(isBase64);
+        let contentToCompress = content;
+        if (isBase64) {
+            const c = content.split(';base64,')[1];
+            contentToCompress = atob(c);
+        }
 
-        return { content: new Uint8Array(), size: 0 };
+        const contentAsBlog = new Blob([contentToCompress]);
 
-        // let contentToCompress = content;
-        // if (isBase64) {
-        //     const c = content.split(';base64,')[1];
-        //     contentToCompress = atob(c);
-        // }
-        //
-        // const {
-        //     size: compressedSize,
-        //     content: compressedContentString
-        // } = await compressBlob(content);
-        //
-        // console.log('---');
-        // console.log('Compressed String Content Length: ' + compressedSize);
-        // console.log('Compression Ratio: ' + (compressedSize / contentToCompress.length) * 100);
-        // console.log('---');
-        //
-        // return {
-        //     size: compressedSize,
-        //     content: compressedContentString,
-        // };
+        const {
+            size: compressedSize,
+            content: compressedContent
+        } = await compressBlob(contentAsBlog);
+
+        console.log('---');
+        console.log('Compressed String Content Length: ' + compressedSize);
+        console.log('Compression Ratio: ' + (compressedSize / contentToCompress.length) * 100);
+        console.log('---');
+
+        const compressedContentAsUint8Array = new Uint8Array(await compressedContent.arrayBuffer());
+
+        return {
+            size: compressedSize,
+            content: compressedContentAsUint8Array,
+        };
     }
 
     private static async getHeaderAndContent(currentFile: ZipFile, offset: number, compressOutput: boolean): Promise<{

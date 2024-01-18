@@ -1,4 +1,7 @@
-export const compressBlob = async (data: Blob): Promise<Blob> => {
+export const compressBlob = async (data: Blob): Promise<{
+    size: number;
+    content: Blob;
+}> => {
     const compressStream = new CompressionStream('deflate-raw');
 
     // Create readable stream from blob
@@ -19,9 +22,11 @@ export const compressBlob = async (data: Blob): Promise<Blob> => {
 
     // Extract the compressed data
     const chunks: Blob[] = [];
+    let chunksSize = 0;
     const writeCompressedData: WritableStream<Blob> = new WritableStream({
         write: (chunk) => {
             chunks.push(chunk);
+            chunksSize += chunk.size;
         }
     });
 
@@ -29,5 +34,8 @@ export const compressBlob = async (data: Blob): Promise<Blob> => {
     await readable.pipeThrough(compressStream).pipeTo(writeCompressedData);
 
     // Return the compressed data
-    return new Blob(chunks);
+    return {
+        size: chunksSize,
+        content: new Blob(chunks),
+    }
 };

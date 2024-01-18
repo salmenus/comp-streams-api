@@ -13,6 +13,7 @@ function App() {
     const [fileData, setFileData] = useState<Blob | undefined>(undefined);
     const [compressedFileData, setCompressedFileData] = useState<Blob | undefined>(undefined);
     const [filePath, setFilePath] = useState('/big-file.xlsx');
+    const [compressOutput, setCompressOutput] = useState<boolean>(false);
 
     const reset = useCallback(() => {
         setStatus('idle');
@@ -45,7 +46,9 @@ function App() {
         }
 
         compressBlob(fileData)
-            .then((compressedBlob) => {
+            .then(({
+                content: compressedBlob,
+            }) => {
                 console.log('File compressed - File size:');
                 console.log(compressedBlob.size);
                 setStatus('success');
@@ -58,11 +61,11 @@ function App() {
             });
     }, [fileData]);
 
-    const buildCompressedExcelFile = useCallback(() => {
+    const buildExcelFileFromMemory = useCallback((compressOutput: boolean = false) => {
         setStatus('compressing');
         console.log('Compressing file from memory ! ...');
 
-        createExcelDocument(rawData).then((blob) => {
+        createExcelDocument(rawData, compressOutput).then((blob) => {
             console.log('File compressed - File size:');
             console.log(blob.size);
             setStatus('success');
@@ -101,10 +104,17 @@ function App() {
                     </p>
                 )}
                 {status === 'idle' && (
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <hr/>
                         <button onClick={compressFile}>Compress File In Path</button>
-                        <hr />
-                        <button onClick={buildCompressedExcelFile}>Build And Compress File From JSON Data</button>
+                        <hr/>
+                        <label>
+                            <input type="checkbox" checked={compressOutput}
+                                   onChange={(e) => setCompressOutput(e.target.checked)}/>
+                            Compress output
+                        </label>
+                        <button onClick={() => buildExcelFileFromMemory(compressOutput)}>Generate Excel From JSON Data
+                        </button>
                     </div>
                 )}
                 {status === 'success' && compressedFileData !== undefined && (
@@ -112,7 +122,7 @@ function App() {
                         <p>
                         File size is after compression: {formatFileSize(compressedFileData.size)}
                         </p>
-                        <button onClick={download}>Download Compressed File</button>
+                        <button onClick={download}>Download Generated File</button>
                     </>
                 )}
             </div>

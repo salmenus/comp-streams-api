@@ -1,7 +1,7 @@
 import {excelFileFactory} from './excelFileFactory.ts';
 import {ZipContainer} from '../zip/zipContainer.ts';
 
-export const getMultipleSheetsAsExcel = async (compressOutput: boolean = false): Promise<Blob | undefined> => {
+export const getMultipleSheetsAsExcel = async (compressOutput: boolean): Promise<Blob | undefined> => {
     ZipContainer.addFolders([
         '_rels/',
         'docProps/',
