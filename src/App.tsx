@@ -1,8 +1,10 @@
 import {useCallback, useEffect, useState} from 'react';
 import './App.css';
+import {xlsxBuild} from './ag/xlsxBuild.ts';
 import {compressBlob} from './utils/compress.ts';
 import {formatFileSize} from './utils/formatFileSize.ts';
 import {readFileAsBlob} from './utils/readFile.ts';
+import rawData from './data/data.json';
 
 type Status = 'idle' | 'compressing' | 'error' | 'success';
 
@@ -56,6 +58,22 @@ function App() {
             });
     }, [fileData]);
 
+    const buildCompressedExcelFile = useCallback(() => {
+        setStatus('compressing');
+        console.log('Compressing file from memory ! ...');
+
+        xlsxBuild(rawData).then((blob) => {
+            console.log('File compressed - File size:');
+            console.log(blob.size);
+            setStatus('success');
+            setCompressedFileData(blob);
+        }).catch((err) => {
+            console.error(err);
+            setStatus('error');
+            setCompressedFileData(undefined);
+        });
+    }, []);
+
     useEffect(() => {
         readFileAsBlob(filePath)
             .then((blob) => {
@@ -83,12 +101,16 @@ function App() {
                     </p>
                 )}
                 {status === 'idle' && (
-                    <button onClick={compressFile}>Compress</button>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <button onClick={compressFile}>Compress File In Path</button>
+                        <hr />
+                        <button onClick={buildCompressedExcelFile}>Build And Compress File From JSON Data</button>
+                    </div>
                 )}
                 {status === 'success' && compressedFileData !== undefined && (
                     <>
                         <p>
-                            File size is after compression: {formatFileSize(compressedFileData.size)}
+                        File size is after compression: {formatFileSize(compressedFileData.size)}
                         </p>
                         <button onClick={download}>Download Compressed File</button>
                     </>

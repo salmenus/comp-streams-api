@@ -1,5 +1,5 @@
 export const compressBlob = async (data: Blob): Promise<Blob> => {
-    const compressStream = new CompressionStream('gzip');
+    const compressStream = new CompressionStream('deflate-raw');
 
     // Create readable stream from blob
     const readable = new ReadableStream({
