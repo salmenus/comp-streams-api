@@ -1,6 +1,6 @@
 import {compressBlob} from '../../utils/compress.ts';
 
-export const compressLocalFileContent = async (content: string, isBase64: boolean): Promise<{
+export const compressLocalFile = async (content: string, isBase64: boolean): Promise<{
     size: number;
     content: Uint8Array;
 }> => {

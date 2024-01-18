@@ -1,7 +1,7 @@
-import {getConvertedContent} from './buildZip.ts';
-import {compressLocalFileContent} from './compressLocalFile.ts';
-import {convertDate, convertTime, decToHex} from './convert.ts';
+import {compressLocalFile} from './compressLocalFile.ts';
+import {convertDate, convertTime, convertDecToHex} from './convert.ts';
 import {getFromCrc32Table, getFromCrc32TableAndByteArray} from './ctcTable.ts';
+import {getConvertedContent} from './getConvertedContent.ts';
 import {utf8Encode} from './utf8Encode.ts';
 import {ZipFile} from './zipContainer.ts';
 
@@ -21,11 +21,13 @@ export const getHeaderAndContent = async (currentFile: ZipFile, offset: number, 
     let extraFields = '';
 
     if (isUTF8) {
-        const uExtraFieldPath = decToHex(1, 1) + decToHex(getFromCrc32Table(utfPath), 4) + utfPath;
-        extraFields = "\x75\x70" +  decToHex(uExtraFieldPath.length, 2) + uExtraFieldPath;
+        const uExtraFieldPath = convertDecToHex(1, 1) + convertDecToHex(getFromCrc32Table(utfPath), 4) + utfPath;
+        extraFields = "\x75\x70" +  convertDecToHex(uExtraFieldPath.length, 2) + uExtraFieldPath;
     }
 
-    const { size, content: convertedContent } = !content ? { size: 0, content: ''} : getConvertedContent(content, isBase64);
+    const { size, content: convertedContent } = !content
+        ? ({ size: 0, content: ''})
+        : getConvertedContent(content, isBase64);
 
     let compressedContent: Uint8Array | undefined = undefined;
     let compressedSize: number | undefined = undefined;
@@ -44,7 +46,7 @@ export const getHeaderAndContent = async (currentFile: ZipFile, offset: number, 
     let compressionPerformed = false;
     if (compressOutput)  {
         log && console.log('compressing...');
-        const result = await compressLocalFileContent(convertedContent, isBase64);
+        const result = await compressLocalFile(convertedContent, isBase64);
         compressedContent = result.content;
         compressedSize = result.size;
         log && console.log('compressed size: ' + compressedSize);
@@ -58,14 +60,14 @@ export const getHeaderAndContent = async (currentFile: ZipFile, offset: number, 
 
     const header = '\x0A\x00' +
         (isUTF8 ? '\x00\x08' : '\x00\x00') +
-        decToHex(compressionMethod, 2) + // The file is Deflated
-        decToHex(time, 2) + // last modified time
-        decToHex(dt, 2) + // last modified date
-        decToHex(sizeToUse ? crcFlag : 0, 4) +
-        decToHex(compressedSize ?? size, 4) + // compressed size
-        decToHex(size, 4) + // uncompressed size
-        decToHex(utfPath.length, 2) + // file name length
-        decToHex(extraFields.length, 2); // extra field length
+        convertDecToHex(compressionMethod, 2) + // The file is Deflated
+        convertDecToHex(time, 2) + // last modified time
+        convertDecToHex(dt, 2) + // last modified date
+        convertDecToHex(sizeToUse ? crcFlag : 0, 4) +
+        convertDecToHex(compressedSize ?? size, 4) + // compressed size
+        convertDecToHex(size, 4) + // uncompressed size
+        convertDecToHex(utfPath.length, 2) + // file name length
+        convertDecToHex(extraFields.length, 2); // extra field length
 
     const fileHeader = 'PK\x03\x04' + header + utfPath + extraFields;
     const folderHeader =
@@ -76,7 +78,7 @@ export const getHeaderAndContent = async (currentFile: ZipFile, offset: number, 
         '\x00\x00' +
         '\x00\x00' +
         (content ? '\x00\x00\x00\x00' : '\x10\x00\x00\x00') + // external file attributes
-        decToHex(offset, 4) + // relative offset of local header
+        convertDecToHex(offset, 4) + // relative offset of local header
         utfPath + // file name
         extraFields; // extra field
 

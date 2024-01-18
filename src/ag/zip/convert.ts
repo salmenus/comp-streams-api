@@ -18,7 +18,7 @@ export const convertDate = (date: Date): number => {
     return dt;
 };
 
-export function decToHex(number: number, bytes: number): string {
+export function convertDecToHex(number: number, bytes: number): string {
     let hex = '';
 
     for (let i = 0; i < bytes; i++) {
